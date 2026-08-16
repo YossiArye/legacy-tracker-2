@@ -17,22 +17,26 @@ function useTasks() {
     setTasks((prev) => [task, ...prev]);
   }, []);
 
-  // Toggling a task's "completed" state. Kept as a map over the current
-  // tasks so we can optimistically update the UI before the server
-  // confirms the change, instead of waiting on a round trip.
+  // Toggling a task's "completed" state. Optimistically updates the UI
+  // before the server confirms the change, instead of waiting on a round
+  // trip. Uses the functional setState form so each update (and its
+  // revert) applies against the latest state rather than a snapshot from
+  // whenever this closure was created — otherwise two rapid toggles on
+  // different tasks can race and one silently clobbers the other.
   const toggleComplete = useCallback(
     (id) => {
       const target = tasks.find((t) => t.id === id);
       if (!target) return;
       const nextCompleted = !target.completed;
 
-      const updated = tasks.map((t) =>
-        t.id === id ? { ...t, completed: nextCompleted } : t
+      setTasks((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, completed: nextCompleted } : t))
       );
-      setTasks(updated);
 
       api.updateTask(id, { completed: nextCompleted }).catch(() => {
-        setTasks(tasks); // revert to the pre-toggle snapshot on failure
+        setTasks((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, completed: !nextCompleted } : t))
+        );
       });
     },
     [tasks]
