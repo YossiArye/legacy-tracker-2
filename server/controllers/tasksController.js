@@ -1,6 +1,6 @@
 import * as store from '../store.js';
 import * as activityLog from '../activityLog.js';
-import { validateTask, VALID_PRIORITIES } from '../utils/validate.js';
+import { validateTask, validateNote, VALID_PRIORITIES } from '../utils/validate.js';
 import { log } from '../utils/logger.js';
 
 function listTasks(req, res) {
@@ -55,6 +55,26 @@ function deleteTask(req, res) {
   }
   activityLog.record('deleted', id);
   res.status(204).end();
+}
+
+/**
+ * Adds a note to a task.
+ * @param {import('express').Request} req - Expects `id` param and `text` in body.
+ * @param {import('express').Response} res
+ * @returns {void}
+ */
+function addNote(req, res) {
+  const id = Number(req.params.id);
+  const errors = validateNote(req.body);
+  if (errors.length > 0) {
+    return res.status(400).json({ errors });
+  }
+  const note = store.addNoteToTask(id, req.body.text);
+  if (!note) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+  log(`Added note to task ${id}`);
+  res.status(201).json(note);
 }
 
 function nextTask(req, res) {
@@ -160,4 +180,5 @@ export {
   deleteTask,
   nextTask,
   bulkImportTasks,
+  addNote,
 };

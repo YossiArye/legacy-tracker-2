@@ -55,6 +55,19 @@ function getNextPendingTask() {
   }
 }
 
+/**
+ * Adds a note to a task.
+ * TODO: not persisted anywhere yet - stub until a real notes model exists.
+ * @param {number} id - The task id.
+ * @param {string} text - The note text.
+ * @returns {object|null} The created note, or null if the task doesn't exist.
+ */
+function addNoteToTask(id, text) {
+  const task = getTaskById(id);
+  if (!task) return null;
+  return { taskId: id, text, createdAt: Date.now() };
+}
+
 export {
   reset,
   createTask,
@@ -63,4 +76,5 @@ export {
   updateTask,
   deleteTask,
   getNextPendingTask,
+  addNoteToTask,
 };

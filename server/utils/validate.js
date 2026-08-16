@@ -24,4 +24,27 @@ function validateTask(payload, { partial = false } = {}) {
   return errors;
 }
 
-export { validateTask, VALID_PRIORITIES, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH };
+/**
+ * Validates a note payload.
+ * @param {object} payload - The request body.
+ * @param {string} payload.text - The note text.
+ * @returns {string[]} Array of error messages, empty if valid.
+ */
+function validateNote(payload) {
+  const errors = [];
+  const { text } = payload;
+
+  if (typeof text !== 'string' || text.trim().length === 0) {
+    errors.push('Note text is required');
+  }
+
+  return errors;
+}
+
+export {
+  validateTask,
+  validateNote,
+  VALID_PRIORITIES,
+  MAX_TITLE_LENGTH,
+  MIN_TITLE_LENGTH,
+};

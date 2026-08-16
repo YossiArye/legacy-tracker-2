@@ -8,6 +8,7 @@ router.get('/next', controller.nextTask);
 router.get('/:id', controller.getTask);
 router.post('/', controller.createTask);
 router.post('/import', controller.bulkImportTasks);
+router.post('/:id/notes', controller.addNote);
 router.patch('/:id', controller.updateTask);
 router.delete('/:id', controller.deleteTask);
 
