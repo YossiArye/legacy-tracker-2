@@ -1,6 +1,6 @@
 import * as store from '../store.js';
 import * as activityLog from '../activityLog.js';
-import { validateTask } from '../utils/validate.js';
+import { validateTask, VALID_PRIORITIES } from '../utils/validate.js';
 import { log } from '../utils/logger.js';
 
 function listTasks(req, res) {
@@ -22,13 +22,13 @@ function getTask(req, res) {
   res.json(task);
 }
 
-function createTask(req, res) {
+async function createTask(req, res) {
   const errors = validateTask(req.body);
   if (errors.length > 0) {
     return res.status(400).json({ errors });
   }
   const task = store.createTask(req.body);
-  activityLog.record('created', task.id);
+  await activityLog.record('created', task.id);
   log(`Created task ${task.id}`);
   res.status(201).json(task);
 }
@@ -65,28 +65,63 @@ function nextTask(req, res) {
   res.json(task);
 }
 
+const URGENT_KEYWORDS = ['urgent', 'asap', 'critical', 'now'];
+
+function splitImportLines(data) {
+  return data
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+// Parses one "title,priority" line into a candidate task. Falls back to
+// medium priority when missing/invalid, then escalates to high if the
+// title contains an urgent keyword.
+function parseImportLine(line) {
+  const [rawTitle, rawPriority] = line.split(',').map((p) => p.trim());
+  const title = rawTitle || '';
+
+  let priority = rawPriority || 'medium';
+  if (!VALID_PRIORITIES.includes(priority)) {
+    priority = 'medium';
+  }
+
+  const lowerTitle = title.toLowerCase();
+  if (URGENT_KEYWORDS.some((keyword) => lowerTitle.includes(keyword))) {
+    priority = 'high';
+  }
+
+  return { title, priority };
+}
+
+function summarizeImport(lines, created, skipped) {
+  const byPriority = { low: 0, medium: 0, high: 0 };
+  for (const task of created) {
+    byPriority[task.priority] += 1;
+  }
+  return {
+    total: lines.length,
+    created: created.length,
+    skipped: skipped.length,
+    byPriority,
+  };
+}
+
 // Bulk-import tasks from a simple CSV-ish payload: one "title,priority" per line.
 // Handles dedup, keyword-based priority bumping, validation, and a summary report.
-// TODO: this got out of hand, split it up before adding CSV file upload support.
 function bulkImportTasks(req, res) {
   const { data } = req.body;
   if (typeof data !== 'string' || data.trim().length === 0) {
     return res.status(400).json({ error: 'No import data provided' });
   }
 
-  const lines = data
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const lines = splitImportLines(data);
   const seenTitles = new Set();
   const created = [];
   const skipped = [];
-  const urgentKeywords = ['urgent', 'asap', 'critical', 'now'];
 
   for (const line of lines) {
-    const parts = line.split(',').map((p) => p.trim());
-    const title = parts[0];
-    let priority = parts[1] || 'medium';
+    const { title, priority } = parseImportLine(line);
 
     if (!title) {
       skipped.push({ line, reason: 'missing title' });
@@ -100,18 +135,6 @@ function bulkImportTasks(req, res) {
     }
     seenTitles.add(normalizedTitle);
 
-    if (!['low', 'medium', 'high'].includes(priority)) {
-      priority = 'medium';
-    }
-
-    const lowerTitle = title.toLowerCase();
-    for (const keyword of urgentKeywords) {
-      if (lowerTitle.includes(keyword)) {
-        priority = 'high';
-        break;
-      }
-    }
-
     const errors = validateTask({ title, priority });
     if (errors.length > 0) {
       skipped.push({ line, reason: errors.join('; ') });
@@ -123,16 +146,7 @@ function bulkImportTasks(req, res) {
     created.push(task);
   }
 
-  const stats = {
-    total: lines.length,
-    created: created.length,
-    skipped: skipped.length,
-    byPriority: {
-      low: created.filter((t) => t.priority === 'low').length,
-      medium: created.filter((t) => t.priority === 'medium').length,
-      high: created.filter((t) => t.priority === 'high').length,
-    },
-  };
+  const stats = summarizeImport(lines, created, skipped);
 
   log(`Bulk import: ${created.length} created, ${skipped.length} skipped`);
   res.status(201).json({ created, skipped, stats });

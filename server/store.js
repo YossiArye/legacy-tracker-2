@@ -29,7 +29,7 @@ function getAllTasks() {
 }
 
 function getTaskById(id) {
-  return tasks.find((t) => t.id = id);
+  return tasks.find((t) => t.id === id);
 }
 
 function updateTask(id, updates) {
@@ -49,7 +49,10 @@ function deleteTask(id) {
 function getNextPendingTask() {
   // The oldest task that hasn't been completed yet - the one that's
   // been waiting the longest gets picked first.
-  return tasks.find((t) => !t.completed);
+  // Array is newest-first (unshift), so iterate backwards.
+  for (let i = tasks.length - 1; i >= 0; i--) {
+    if (!tasks[i].completed) return tasks[i];
+  }
 }
 
 export {
