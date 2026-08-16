@@ -43,3 +43,9 @@ Route order in `routes/tasks.js` matters: `GET /next` is declared before `GET /:
 There is no global state library (no Redux/Zustand/Context). All server-derived state lives in one hook, `client/src/hooks/useTasks.js`, which owns the `tasks` array and does an optimistic update for `toggleComplete` (applies the flip locally, reverts on API failure). `App.jsx` separately owns UI-only `filter` state and derives the visible list by filtering client-side — the backend's `?completed=` query param support is unused by the client.
 
 `client/src/components/TaskList.jsx` renders the task `<ul>`, delegating each row to `TaskItem.jsx`; it's rendered from `App.jsx` and fed the filtered `visibleTasks` array.
+
+## Conventions
+
+- Never call `console.log`/`console.error` directly in server code — always use `log()` from `server/utils/logger.js`.
+- Every new exported function gets a JSDoc comment (`@param`/`@returns`) directly above it.
+- Prefer `const` over `let`; only use `let` when a binding is genuinely reassigned.
