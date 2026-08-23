@@ -44,6 +44,7 @@ function updateTask(req, res) {
     return res.status(404).json({ error: 'Task not found' });
   }
   activityLog.record('updated', id);
+  log(`Updated task ${id}`);
   res.json(updated);
 }
 
