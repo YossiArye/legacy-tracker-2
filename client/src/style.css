@@ -23,6 +23,14 @@ body {
   color: #999;
 }
 
+.task-item button {
+  color: #e74c3c;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
 .priority-high {
   border-left: 3px solid #e74c3c;
   padding-left: 8px;
