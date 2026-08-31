@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: legacy-tracker-api
+    name: legacy-tracker-api-2
     runtime: node
     plan: free
     branch: class-work
