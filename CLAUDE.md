@@ -70,6 +70,15 @@ proxy doesn't apply and two env vars wire them together:
 
 Neither value may have a trailing slash — CORS compares origins exactly.
 
+Two gotchas worth knowing, both hit during the initial setup:
+
+- Linking the Git repository in the Netlify UI **wipes environment variables that
+  were set beforehand**. Set `VITE_API_URL` *after* linking, or the build bakes in
+  the empty fallback and the client silently calls its own origin (`/api/tasks` →
+  404 on Netlify) instead of Render.
+- `VITE_API_URL` is read at **build** time, not run time. Changing it has no effect
+  until the site rebuilds.
+
 `render.yaml` describes the API service, `netlify.toml` the client build. Netlify's
 production branch is a site-level setting, not something `netlify.toml` controls, so
 it's set to `class-work` in the Netlify UI.
