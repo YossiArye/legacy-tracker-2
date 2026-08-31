@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm test)",
+      "Bash(npm run test)",
+      "Bash(npm run lint*)",
+      "Bash(git status)",
+      "mcp__filesystem__get_file_info"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm test > /tmp/test-log-run.txt 2>&1; ec=$?; echo \"$(date -u +%Y-%m-%dT%H:%M:%SZ) $( [ $ec -eq 0 ] && echo PASS || echo FAIL )\" >> .claude/test-log.txt"
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath' | { read -r f; case \"$f\" in */server/*) rel=${f#$PWD/}; out=$(claude -p --agent tracker-reviewer \"Review $rel\" 2>&1); printf '=== %s %s ===\\n%s\\n\\n' \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"$rel\" \"$out\" >> .claude/review-log.txt ;; esac; } 2>/dev/null || true",
+            "statusMessage": "Running tracker-reviewer..."
+          }
+        ]
+      }
+    ]
+  }
+}

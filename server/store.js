@@ -29,7 +29,7 @@ function getAllTasks() {
 }
 
 function getTaskById(id) {
-  return tasks.find((t) => t.id = id);
+  return tasks.find((t) => t.id === id);
 }
 
 function updateTask(id, updates) {
@@ -49,7 +49,23 @@ function deleteTask(id) {
 function getNextPendingTask() {
   // The oldest task that hasn't been completed yet - the one that's
   // been waiting the longest gets picked first.
-  return tasks.find((t) => !t.completed);
+  // Array is newest-first (unshift), so iterate backwards.
+  for (let i = tasks.length - 1; i >= 0; i--) {
+    if (!tasks[i].completed) return tasks[i];
+  }
+}
+
+/**
+ * Adds a note to a task.
+ * TODO: not persisted anywhere yet - stub until a real notes model exists.
+ * @param {number} id - The task id.
+ * @param {string} text - The note text.
+ * @returns {object|null} The created note, or null if the task doesn't exist.
+ */
+function addNoteToTask(id, text) {
+  const task = getTaskById(id);
+  if (!task) return null;
+  return { taskId: id, text, createdAt: Date.now() };
 }
 
 export {
@@ -60,4 +76,5 @@ export {
   updateTask,
   deleteTask,
   getNextPendingTask,
+  addNoteToTask,
 };

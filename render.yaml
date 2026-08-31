@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: legacy-tracker-api-2
+    runtime: node
+    plan: free
+    branch: class-work
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: CLIENT_URL
+        sync: false
