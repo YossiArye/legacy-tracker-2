@@ -78,6 +78,10 @@ Two gotchas worth knowing, both hit during the initial setup:
   404 on Netlify) instead of Render.
 - `VITE_API_URL` is read at **build** time, not run time. Changing it has no effect
   until the site rebuilds.
+- On Render, the service's Source must be the **Git Provider** connection, not the
+  **Public Git Repository** tab. A public clone URL builds fine but installs no
+  webhook, so `autoDeploy: yes` silently never fires. The Render GitHub App also
+  needs per-repository access granted at github.com/settings/installations.
 
 `render.yaml` describes the API service, `netlify.toml` the client build. Netlify's
 production branch is a site-level setting, not something `netlify.toml` controls, so
