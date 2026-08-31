@@ -49,3 +49,30 @@ There is no global state library (no Redux/Zustand/Context). All server-derived 
 - Never call `console.log`/`console.error` directly in server code — always use `log()` from `server/utils/logger.js`.
 - Every new exported function gets a JSDoc comment (`@param`/`@returns`) directly above it.
 - Prefer `const` over `let`; only use `let` when a binding is genuinely reassigned.
+
+## Deployment
+
+The two runtimes deploy to two different hosts, both tracking the `class-work` branch:
+
+| Part | Host | URL |
+|---|---|---|
+| `server/` | Render (`legacy-tracker-api-2`) | https://legacy-tracker-api-2.onrender.com |
+| `client/` | Netlify (`legacy-tracker-2`) | https://legacy-tracker-2.netlify.app |
+
+Because the two halves are on different origins in production, the dev-only Vite
+proxy doesn't apply and two env vars wire them together:
+
+- `VITE_API_URL` (Netlify, build-time) — the Render origin. `client/src/api/tasksApi.js`
+  falls back to `''` when unset, which preserves the relative `/api/tasks` path the
+  Vite proxy expects in dev.
+- `CLIENT_URL` (Render, runtime) — the Netlify origin, used as the CORS allowlist in
+  `server/index.js`.
+
+Neither value may have a trailing slash — CORS compares origins exactly.
+
+`render.yaml` describes the API service, `netlify.toml` the client build. Netlify's
+production branch is a site-level setting, not something `netlify.toml` controls, so
+it's set to `class-work` in the Netlify UI.
+
+Note: `server/store.js` is in-memory and reseeds on every boot. Render's free plan
+sleeps the service when idle, so tasks reset after a cold start — expected, not a bug.
